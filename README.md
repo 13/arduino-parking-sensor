@@ -49,7 +49,7 @@ git clone https://github.com/13/arduino-parking-sensor.git
 
 ## Roadmap
 
-- [ ] ...
+- [ ] add WiFi with ESP
 
 ## Release History
 
