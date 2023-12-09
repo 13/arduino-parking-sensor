@@ -1,209 +1,305 @@
-/* 
- 8x8 Matrix:
-   pin 13 = DataIn 
-   pin 12 = CLK 
-   pin 11 = LOAD/CS
- HC-SR04:
-   pin 10 = TRIGGER
-   pin 09 = ECHO
-*/
 #include <Arduino.h>
-#include <LedControl.h>
+#include <LedController.hpp>
 #include <NewPing.h>
+#include "LedMatrixPatterns.h"
 
-#define PING_PIN 10
-#define TRIGGER_PIN 10 
+#define VERBOSE
+// #define DEBUG
+
+#if defined(ESP8266) || defined(ESP32)
+// MAX7218
+#define PIN_CLK D5
+#define PIN_CS D8
+#define PIN_DATA D7
+// HC-SR04
+#define TRIGGER_PIN D1
+#define ECHO_PIN D2
+#else
+// MAX7218
+#define PIN_CLK 12
+#define PIN_CS 11
+#define PIN_DATA 13
+// HC-SR04
+#define TRIGGER_PIN 10
 #define ECHO_PIN 9
-#define MAX_DISTANCE 350 
-#define MY_DISTANCE 20
+#endif
 
-NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); 
-LedControl lc = LedControl(13,12,11,1);
+#define MAX_DISTANCE 350 // Change detection distance in cm [350]
 
-unsigned long time = 0;
-long timeout = 500;
-int state = 0;
+LedController lc = LedController(PIN_DATA, PIN_CLK, PIN_CS, 1);
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
 
-void setup() {
-  Serial.begin (9600);
-  pinMode(TRIGGER_PIN, OUTPUT);
-  pinMode(ECHO_PIN, INPUT);
+const unsigned long UPDATE_INTERVAL = 100; // Update display every 200 milliseconds
+unsigned long lastUpdate = 0;
+unsigned int state = 0;
 
-  lc.shutdown(0,false);
-  lc.setIntensity(0,8);
-  lc.clearDisplay(0);
+const unsigned int MAX_TIMEOUT = 500;
+unsigned int counterTimeout = 0;
+boolean timeout = false;
+unsigned int prevDistance = 0;
 
+boolean isCar = false;
+
+void setup()
+{
+  Serial.begin(115200);
+  lc.setIntensity(8); // Set the brightness (0 to 15)
+  lc.clearMatrix();
 }
 
-  byte smiley[8]={
-      B00111100,
-      B01000010,
-      B10100101,
-      B10000001,
-      B10100101,
-      B10011001,
-      B01000010,
-      B00111100
-  };
-  
-  byte ex[8]={
-      B10000001,
-      B01000010,
-      B00100100,
-      B00011000,
-      B00011000,
-      B00100100,
-      B01000010,
-      B10000001
-  };  
-  
-  byte arrow[8]={
-      B00010000,
-      B00101000,
-      B01000100,
-      B10000010,
-      B00010000,
-      B00101000,
-      B01000100,
-      B10000010
-  };   
+void loop()
+{
+  unsigned long currentMillis = millis();
 
-  byte null[8]={
-      B00000000,
-      B00000000,
-      B00000000,
-      B00000000,
-      B00000000,
-      B00000000,
-      B00000000,
-      B00000000
-  };   
- 
-  byte number1[8]={
-      B00000000,
-      B00001000,
-      B00011000,
-      B00101000,
-      B00001000,
-      B00001000,
-      B00011100,
-      B00000000
-  };   
-  byte number2[8]={
-      B00000000,
-      B00011000,
-      B00100100,
-      B00001000,
-      B00010000,
-      B00100000,
-      B00111100,
-      B00000000
-  }; 
-  byte number3[8]={
-      B00000000,
-      B00111100,
-      B00000100,
-      B00011000,
-      B00000100,
-      B00100100,
-      B00011000,
-      B00000000
-  };
-  byte number4[8]={
-      B00000000,
-      B00000100,
-      B00001100,
-      B00010100,
-      B00111100,
-      B00000100,
-      B00000100,
-      B00000000
-  }; 
-  byte number5[8]={
-      B00000000,
-      B00111100,
-      B00100000,
-      B00111000,
-      B00000100,
-      B00100100,
-      B00011000,
-      B00000000
-  };   
-  
-void writeMatrix(byte bname[8]) {
-  for (int i=0; i <= 7; i++){
-    lc.setRow(0,i,bname[i]);
-    delay(10);  
-  }
-}
+  // Check if it's time to update the display
+  if (currentMillis - lastUpdate >= UPDATE_INTERVAL)
+  {
+    lastUpdate = currentMillis;
 
-void writeMatrixMirror(byte bname[8]) {
-  for (int i=0; i <= 7; i++){
-    lc.setRow(0,i,bname[7-i]);
-    delay(10);  
-  }
-}
+    // Measure distance
+    unsigned int distance = sonar.ping_cm();
+#ifdef DEBUG
+    Serial.print(F("> Distance: "));
+    Serial.print(distance);
+    Serial.println(F("cm"));
+#endif
+    if (abs(distance - prevDistance) > 2)
+    {
+#ifdef DEBUG
+      Serial.print(F("> DistanceDiff: "));
+      Serial.print(abs(distance - prevDistance));
+      Serial.println(F("cm"));
+#endif
+      timeout = false;
+    }
+    prevDistance = distance;
 
-void loop() {
-  delay(50); // 50
-  unsigned int uS = sonar.ping(); 
-  unsigned int distance = (uS / US_ROUNDTRIP_CM);
-  
-  if (distance == 0){
-    writeMatrix(null);
-    
-  } else if (distance > MAX_DISTANCE) { 
-    writeMatrix(null);
-    
-  } else if (distance > 0 && distance <= MY_DISTANCE) {
-    if (state == 1){
-      if (time < timeout) {
-        writeMatrix(smiley);
-        time = time + 1;
-      } else {
-        writeMatrix(null);
-        time = timeout + 1;
+    // Check if car is present
+    if (distance > 0 && distance < MAX_DISTANCE)
+    {
+      if (!isCar)
+      {
+#ifdef VERBOSE
+        Serial.println(F("> Car: True"));
+#endif
+        isCar = true;
       }
-    } else {
-      time = 0;
-    }  
-    state = 1;
-    
-  } else if (distance > MY_DISTANCE && distance <= MAX_DISTANCE) {
-    if (state == 2){
-      if (time < timeout) {
-        if (distance < 50){
-          if (distance < 30){
-            writeMatrix(number1);
-          } else if (distance < 40){
-            writeMatrix(number2);
-          } else if (distance < 50){
-            writeMatrix(number3);
-          }
-        } else {
-          writeMatrix(arrow);
-        }
-        time = time + 1;
-      } else {
-        writeMatrix(null);
-        time = timeout + 1;
+    }
+    else
+    {
+      if (isCar)
+      {
+#ifdef VERBOSE
+        Serial.println(F("> Car: False"));
+#endif
+        isCar = false;
       }
-    } else {
-      time = 0;
-    }  
-    state = 2;
-    
-  }
+    }
 
-  // debug
-  /*Serial.print("Dist: ");
-  Serial.print(distance);
-  Serial.println("");
-  Serial.print("Time: ");
-  Serial.print(time);
-  Serial.println("");
-  Serial.print("Stat: ");
-  Serial.print(state);
-  Serial.println("");
-  Serial.println("");*/
+    // check distance for 8x8 display
+    if (distance == 0)
+    {
+      if (state != 0 && !timeout)
+      {
+        writeMatrix(lc, null);
+        state = 0;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 2)
+    {
+      if (state != 11 && !timeout)
+      {
+        writeMatrix(lc, ex);
+        state = 11;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }    
+    else if (distance < 20 && !timeout)
+    {
+      if (state != 1)
+      {
+        writeMatrix(lc, smile);
+        state = 1;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 30 && !timeout)
+    {
+      if (state != 2)
+      {
+        writeMatrix(lc, n1);
+        state = 2;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 40 && !timeout)
+    {
+      if (state != 3)
+      {
+        writeMatrix(lc, n2);
+        state = 3;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 50 && !timeout)
+    {
+      if (state != 4)
+      {
+        writeMatrix(lc, n3);
+        state = 4;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 60 && !timeout)
+    {
+      if (state != 5)
+      {
+        writeMatrix(lc, n4);
+        state = 5;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < 70 && !timeout)
+    {
+      if (state != 6 && !timeout)
+      {
+        writeMatrix(lc, n5);
+        state = 6;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else if (distance < MAX_DISTANCE)
+    {
+      if (state != 10 && !timeout)
+      {
+        writeMatrix(lc, arrow);
+        state = 10;
+        counterTimeout = 0;
+#ifdef VERBOSE
+        Serial.print(F("> Distance: "));
+        Serial.print(distance);
+        Serial.println(F("cm"));
+        Serial.print(F("> 8x8: "));
+        Serial.println(state);
+#endif
+      }
+      else
+      {
+        counterTimeout++;
+      }
+    }
+    else
+    {
+      if (state != 0)
+      {
+#ifdef VERBOSE
+        Serial.println(F("> 8x8: OFF"));
+#endif
+        writeMatrix(lc, null);
+        state = 0;
+      }
+    }
+    if (counterTimeout > MAX_TIMEOUT)
+    {
+      if (state != 0)
+      {
+#ifdef VERBOSE
+        Serial.println(F("> 8x8: OFF by Timeout"));
+#endif
+        writeMatrix(lc, null);
+        state = 0;
+        timeout = true;
+      }
+      counterTimeout = MAX_TIMEOUT + 1;
+    }
+  }
 }
