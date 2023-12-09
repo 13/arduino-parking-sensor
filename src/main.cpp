@@ -38,7 +38,7 @@ unsigned int counterTimeout = 0;
 boolean timeout = false;
 unsigned int prevDistance = 0;
 
-boolean isCar = false;
+boolean isCarPresent = false;
 
 #if defined(ESP8266)
 String hostname = "esp8266-";
@@ -151,22 +151,24 @@ void loop()
     // Check if car is present
     if (distance > 0 && distance < MAX_DISTANCE)
     {
-      if (!isCar)
+      if (!isCarPresent)
       {
 #ifdef VERBOSE
         Serial.println(F("> Car: True"));
 #endif
-        isCar = true;
+        isCarPresent = true;
+        myData.car = isCarPresent;
       }
     }
     else
     {
-      if (isCar)
+      if (isCarPresent)
       {
 #ifdef VERBOSE
         Serial.println(F("> Car: False"));
 #endif
-        isCar = false;
+        isCarPresent = false;
+        myData.car = isCarPresent;
       }
     }
 
