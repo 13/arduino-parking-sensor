@@ -61,10 +61,13 @@
                     </th>
                     <td class="text-end"><span id="timestamp"></span></td>
                   </tr>
+                  <tr>
+                    <th class="ps-3">
+                      <span class="labelCarIsPresent">Car Present: </span>
+                    </th>
+                    <td class="text-end"><span id="carispresent"></span></td>
+                  </tr>
                 </tbody>
-              </table>
-              <table class="table table-hover mb-0">
-                <tbody id="packets"></tbody>
               </table>
             </div>
           </div>
@@ -128,6 +131,7 @@
         const rssiElement = document.getElementById("rssi");
         const memFreeElement = document.getElementById("memfree");
         const memFragElement = document.getElementById("memfrag");
+        const carIsPresentElement = document.getElementById("carispresent");
 
         if (parsedData.hostname) {
           document.querySelector("title").textContent = parsedData.hostname;
@@ -234,43 +238,10 @@
           )}%, ${rssi} dBm`;
         }
 
-        if (
-          parsedData.packets &&
-          parsedData.packets !== null &&
-          parsedData.packets[0] !== ""
-        ) {
-          const packetsElement = document.getElementById("packets");
-          packetsElement.innerHTML =
-            '<tr><th class="ps-3">Last Packets:</th></tr>';
-
-          const listContent = parsedData.packets
-            .filter((element) => element !== null && element !== "")
-            .map((element) => {
-              const packetData = JSON.parse(element);
-              delete packetData.RN;
-
-              const packetTs = new Date((packetData.timestamp - 3600) * 1000);
-              const formattedPacketTs =
-                packetTs.getHours().toString().padStart(2, "0") +
-                ":" +
-                packetTs.getMinutes().toString().padStart(2, "0") +
-                ":" +
-                packetTs.getSeconds().toString().padStart(2, "0");
-
-              delete packetData.timestamp;
-              const tsPair = { X: formattedPacketTs };
-              const newPacketData = { ...tsPair, ...packetData };
-              const serializedData = JSON.stringify(newPacketData);
-              return (
-                '<tr><td class="ps-3 text-break">' +
-                `${serializedData}` +
-                "</td></tr>"
-              );
-            })
-            .join("");
-
-          packetsElement.innerHTML += listContent;
+        if (parsedData.car || parsedData.distance) {
+          carIsPresentElement.innerHTML = parsedData.car + ' (' + parsedData.distance + 'cm)';
         }
+
       }
 
       window.addEventListener("load", onLoad);

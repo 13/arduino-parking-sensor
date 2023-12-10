@@ -47,15 +47,18 @@ void getState()
     myData.ssid = WiFi.SSID();
     myData.rssi = WiFi.RSSI();
     myData.desc = desc;
+    myData.hostname = hostname;
 #if defined(ESP8266)
-    myData.hostname = WiFi.hostname();
+    // myData.hostname = WiFi.hostname();
     myData.resetreason = ESP.getResetReason();
     myData.memfrag = ESP.getHeapFragmentation();
+    myData.cpu = String(ESP.getChipId());
 #endif
 #if defined(ESP32)
-    myData.hostname = WiFi.getHostname();
+    // myData.hostname = WiFi.getHostname();
     myData.resetreason = esp_reset_reason();
     myData.memfrag = ESP.getMaxAllocHeap();
+    myData.cpu = String(ESP.getChipModel()) + "(v" + String(ESP.getChipRevision()) + ")" + " CPU" + String(ESP.getChipCores());
 #endif
     myData.memfree = ESP.getFreeHeap();
     myData.uptime = countMsg;

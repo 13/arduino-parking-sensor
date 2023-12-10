@@ -17,6 +17,7 @@ struct wsData
     String ssid;
     String ip;
     String mac;
+    String cpu;
     String hostname;
     String desc;
     String resetreason;
@@ -40,6 +41,7 @@ struct wsData
         doc["ssid"] = ssid;
         doc["ip"] = ip;
         doc["mac"] = mac;
+        doc["cpu"] = cpu;
         doc["hostname"] = hostname;
         doc["desc"] = desc;
         doc["resetreason"] = resetreason;

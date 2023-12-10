@@ -75,6 +75,9 @@ void setup()
   Serial.begin(115200);
   delay(10);
 #ifdef VERBOSE
+  lc.setIntensity(8); // Set the brightness (0 to 15)
+  lc.clearMatrix();
+  writeMatrix(lc, smile);
   delay(5000);
 #endif
   // Start Boot
@@ -109,6 +112,8 @@ void setup()
   }
   // Initalize websocket
   initWebSocket();
+
+  // max7219
   lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
 }
@@ -132,6 +137,7 @@ void loop()
 
     // Measure distance
     unsigned int distance = sonar.ping_cm();
+    myData.distance = distance;
 #ifdef DEBUG
     Serial.print(F("> Distance: "));
     Serial.print(distance);
@@ -158,6 +164,7 @@ void loop()
 #endif
         isCarPresent = true;
         myData.car = isCarPresent;
+        notifyClients();
       }
     }
     else
@@ -169,6 +176,7 @@ void loop()
 #endif
         isCarPresent = false;
         myData.car = isCarPresent;
+        notifyClients();
       }
     }
 
