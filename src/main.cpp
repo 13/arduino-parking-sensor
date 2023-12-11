@@ -12,8 +12,8 @@
 #define PIN_CS D8
 #define PIN_DATA D7
 // HC-SR04
-#define TRIGGER_PIN D1
-#define ECHO_PIN D2
+#define ECHO_PIN D1
+#define TRIGGER_PIN D2
 #else
 // MAX7218
 #define PIN_CLK 12
