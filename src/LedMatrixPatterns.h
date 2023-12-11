@@ -18,5 +18,6 @@ extern byte n5[8];
 
 void writeMatrix(LedController &lc, byte bname[8]);
 void writeMatrixMirror(LedController &lc, byte bname[8]);
-
+void rotateMatrix90Degrees(byte inputMatrix[8], byte outputMatrix[8]);
+ 
 #endif // LED_MATRIX_PATTERNS_H

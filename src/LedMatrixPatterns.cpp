@@ -92,11 +92,30 @@ byte n5[8] = {
     B00011000,
     B00000000};
 
+void rotateMatrix90Degrees(byte inputMatrix[8], byte outputMatrix[8]) {
+  for (int row = 0; row < 8; row++) {
+    for (int col = 0; col < 8; col++) {
+      bitWrite(outputMatrix[row], col, bitRead(inputMatrix[7 - col], row));
+    }
+  }
+}
+
+/*void writeMatrix(LedController &lc, byte bname[8]) {
+  byte rotatedMatrix[8];
+  rotateMatrix90Degrees(bname, rotatedMatrix);
+
+  for (int i = 0; i <= 7; i++) {
+    lc.setRow(0, i, rotatedMatrix[i]);
+    delay(1);
+  }
+}*/
+
 void writeMatrix(LedController &lc, byte bname[8])
 {
   for (int i = 0; i <= 7; i++)
   {
-    lc.setRow(0, i, bname[i]);
+    //lc.setColumn(0, i, bname[i]);
+    lc.setColumn(0, i, bname[7 - i]);
     delay(1);
   }
 }

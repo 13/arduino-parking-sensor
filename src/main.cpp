@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include <LedController.hpp>
 #include <NewPing.h>
+#include "credentials.h"
 #include "LedMatrixPatterns.h"
 #include "wsData.h"
 #include "helpers.h"
-#include "credentials.h"
 
 #if defined(ESP8266) || defined(ESP32)
 // MAX7218
@@ -25,6 +25,7 @@
 #endif
 
 #define MAX_DISTANCE 350 // Change detection distance in cm [350]
+#define MAX_DISTANCE_DIFF 5 // [2]
 
 LedController lc = LedController(PIN_DATA, PIN_CLK, PIN_CS, 1);
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -79,6 +80,7 @@ void setup()
   lc.clearMatrix();
   writeMatrix(lc, smile);
   delay(5000);
+  lc.clearMatrix();
 #endif
   // Start Boot
   Serial.println(F("> "));
@@ -143,7 +145,7 @@ void loop()
     Serial.print(distance);
     Serial.println(F("cm"));
 #endif
-    if (abs(distance - prevDistance) > 2)
+    if (abs(distance - prevDistance) > MAX_DISTANCE_DIFF)
     {
 #ifdef DEBUG
       Serial.print(F("> DistanceDiff: "));
