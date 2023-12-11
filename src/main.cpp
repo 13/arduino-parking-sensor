@@ -1,10 +1,8 @@
 #include <Arduino.h>
 #include <LedController.hpp>
 #include <NewPing.h>
-#include "credentials.h"
 #include "LedMatrixPatterns.h"
-#include "wsData.h"
-#include "helpers.h"
+#include "version.h"
 
 #if defined(ESP8266) || defined(ESP32)
 // MAX7218
@@ -41,36 +39,6 @@ unsigned int prevDistance = 0;
 
 boolean isCarPresent = false;
 
-#if defined(ESP8266)
-String hostname = "esp8266-";
-#endif
-#if defined(ESP32)
-String hostname = "esp32-";
-#endif
-
-// WiFi & MQTT
-WiFiClient wifiClient;
-PubSubClient mqttClient(wifiClient);
-wsData myData;
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", 3600);
-
-long mqttLastReconnectAttempt = 0;
-int wsDataSize = 0;
-uint8_t connectedClients = 0;
-
-unsigned long previousMinute = 0;
-
-// supplementary functions
-#ifdef VERBOSE
-// one minute mark
-#define MARK
-unsigned long lastMillis = 0L;
-uint32_t countMsg = 0;
-#endif
-
 void setup()
 {
   Serial.begin(115200);
@@ -87,9 +55,6 @@ void setup()
   Serial.println(F("> "));
   Serial.print(F("> Booting... Compiled: "));
   Serial.println(VERSION);
-  Serial.print(F("> Node ID: "));
-  Serial.println(getUniqueID());
-  hostname += getUniqueID();
 #ifdef VERBOSE
   Serial.print(("> Mode: "));
   Serial.print(F("VERBOSE "));
@@ -98,23 +63,6 @@ void setup()
 #endif
   Serial.println();
 #endif
-  initFS();
-  checkWiFi();
-  mqttClient.setServer(mqtt_server, mqtt_port);
-#ifdef MQTT_SUBSCRIBE
-  mqttClient.setCallback(onMqttMessage);
-#endif
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    initMDNS();
-    connectToMqtt();
-    timeClient.begin();
-    timeClient.update();
-    myData.boottime = timeClient.getEpochTime();
-  }
-  // Initalize websocket
-  initWebSocket();
-
   // max7219
   lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
@@ -122,14 +70,6 @@ void setup()
 
 void loop()
 {
-  ws.cleanupClients();
-#ifdef REQUIRES_INTERNET
-  checkWiFi();
-#endif
-  checkMqtt();
-#ifdef MARK
-  printMARK();
-#endif
   unsigned long currentMillis = millis();
 
   // Check if it's time to update the display
@@ -139,7 +79,6 @@ void loop()
 
     // Measure distance
     unsigned int distance = sonar.ping_cm();
-    myData.distance = distance;
 #ifdef DEBUG
     Serial.print(F("> Distance: "));
     Serial.print(distance);
@@ -165,8 +104,6 @@ void loop()
         Serial.println(F("> Car: True"));
 #endif
         isCarPresent = true;
-        myData.car = isCarPresent;
-        notifyClients();
       }
     }
     else
@@ -177,8 +114,6 @@ void loop()
         Serial.println(F("> Car: False"));
 #endif
         isCarPresent = false;
-        myData.car = isCarPresent;
-        notifyClients();
       }
     }
 
