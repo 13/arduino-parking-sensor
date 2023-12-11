@@ -4,23 +4,13 @@
 #include "LedMatrixPatterns.h"
 #include "version.h"
 
-#if defined(ESP8266) || defined(ESP32)
 // MAX7218
-#define PIN_CLK D5
-#define PIN_CS D8
-#define PIN_DATA D7
+#define PIN_CLK 15 // SCLK
+#define PIN_CS 10 //
+#define PIN_DATA 16 // MOSI
 // HC-SR04
-#define TRIGGER_PIN D1
-#define ECHO_PIN D2
-#else
-// MAX7218
-#define PIN_CLK 12
-#define PIN_CS 11
-#define PIN_DATA 13
-// HC-SR04
-#define TRIGGER_PIN 10
-#define ECHO_PIN 9
-#endif
+#define ECHO_PIN 2
+#define TRIGGER_PIN 3
 
 #define MAX_DISTANCE 350 // Change detection distance in cm [350]
 #define MAX_DISTANCE_DIFF 5 // [2]
