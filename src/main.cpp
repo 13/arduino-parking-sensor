@@ -4,16 +4,19 @@
 #include "LedMatrixPatterns.h"
 #include "version.h"
 
+#define VERBOSE
+#define DEBUG
+
 // MAX7218
-#define PIN_CLK 15 // SCLK
-#define PIN_CS 10 //
-#define PIN_DATA 16 // MOSI
+#define PIN_CLK 15        // SCLK
+#define PIN_CS 10         //
+#define PIN_DATA 16       // MOSI
 // HC-SR04
 #define ECHO_PIN 2
 #define TRIGGER_PIN 3
 
-#define MAX_DISTANCE 350 // Change detection distance in cm [350]
-#define MAX_DISTANCE_DIFF 5 // [2]
+#define MAX_DISTANCE 350    // Change detection distance in cm [350]
+#define MAX_DISTANCE_DIFF 5 // [2] 5
 
 LedController lc = LedController(PIN_DATA, PIN_CLK, PIN_CS, 1);
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -36,7 +39,7 @@ void setup()
 #ifdef VERBOSE
   lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
-  writeMatrix(lc, smile);
+  writeMatrix(lc, load);
   delay(5000);
   lc.clearMatrix();
 #endif
@@ -72,13 +75,16 @@ void loop()
 #ifdef DEBUG
     Serial.print(F("> Distance: "));
     Serial.print(distance);
+    Serial.print(F("cm; Prev:"));
+    Serial.print(prevDistance);
     Serial.println(F("cm"));
 #endif
-    if (abs(distance - prevDistance) > MAX_DISTANCE_DIFF)
+    int distanceDiff = abs(distance - prevDistance);
+    if (distanceDiff > MAX_DISTANCE_DIFF)
     {
 #ifdef DEBUG
       Serial.print(F("> DistanceDiff: "));
-      Serial.print(abs(distance - prevDistance));
+      Serial.print(distanceDiff);
       Serial.println(F("cm"));
 #endif
       timeout = false;

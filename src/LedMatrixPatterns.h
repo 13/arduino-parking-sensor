@@ -7,8 +7,10 @@
 #include <LedController.hpp>
 
 extern byte smile[8];
+extern byte smile2[8];
 extern byte ex[8];
 extern byte arrow[8];
+extern byte load[8];
 extern byte null[8];
 extern byte n1[8];
 extern byte n2[8];

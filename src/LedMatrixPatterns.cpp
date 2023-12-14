@@ -12,6 +12,16 @@ byte smile[8] = {
     B01000010,
     B00111100};
 
+byte smile2[8] = {
+    B00111100,
+    B01000010,
+    B10100101,
+    B10000001,
+    B10111101,
+    B10000001,
+    B01000010,
+    B00111100};
+
 byte ex[8] = {
     B10000001,
     B01000010,
@@ -31,6 +41,16 @@ byte arrow[8] = {
     B00101000,
     B01000100,
     B10000010};
+
+byte load[8] = {
+    B10011000,
+    B11001100,
+    B01100110,
+    B00110011,
+    B01100110,
+    B11001100,
+    B10011000,
+    B00110000};
 
 byte null[8] = {
     B00000000,
@@ -92,9 +112,12 @@ byte n5[8] = {
     B00011000,
     B00000000};
 
-void rotateMatrix90Degrees(byte inputMatrix[8], byte outputMatrix[8]) {
-  for (int row = 0; row < 8; row++) {
-    for (int col = 0; col < 8; col++) {
+void rotateMatrix90Degrees(byte inputMatrix[8], byte outputMatrix[8])
+{
+  for (int row = 0; row < 8; row++)
+  {
+    for (int col = 0; col < 8; col++)
+    {
       bitWrite(outputMatrix[row], col, bitRead(inputMatrix[7 - col], row));
     }
   }
@@ -114,7 +137,7 @@ void writeMatrix(LedController &lc, byte bname[8])
 {
   for (int i = 0; i <= 7; i++)
   {
-    //lc.setColumn(0, i, bname[i]);
+    // lc.setColumn(0, i, bname[i]);
     lc.setColumn(0, i, bname[7 - i]);
     delay(1);
   }
