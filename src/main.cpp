@@ -15,6 +15,7 @@
 #define ECHO_PIN 2
 #define TRIGGER_PIN 3
 
+#define INTENSITY 0         // Set the brightness (0 to 15) [8] 0
 #define MAX_DISTANCE 350    // Change detection distance in cm [350]
 #define MAX_DISTANCE_DIFF 5 // [2] 5
 
@@ -37,8 +38,8 @@ void setup()
   Serial.begin(115200);
   delay(10);
 #ifdef VERBOSE
-  lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
+  lc.setIntensity(INTENSITY);
   writeMatrix(lc, load);
   delay(5000);
   lc.clearMatrix();
@@ -57,8 +58,8 @@ void setup()
   Serial.println();
 #endif
   // max7219
-  lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
+  lc.setIntensity(INTENSITY);
 }
 
 void loop()
