@@ -1,10 +1,10 @@
 #include <Arduino.h>
 #include <LedController.hpp>
 #include <NewPing.h>
-#include "credentials.h"
 #include "LedMatrixPatterns.h"
 #include "wsData.h"
 #include "helpers.h"
+#include "credentials.h"
 
 #if defined(ESP8266) || defined(ESP32)
 // MAX7218
@@ -14,18 +14,11 @@
 // HC-SR04
 #define ECHO_PIN D1
 #define TRIGGER_PIN D2
-#else
-// MAX7218
-#define PIN_CLK 12
-#define PIN_CS 11
-#define PIN_DATA 13
-// HC-SR04
-#define TRIGGER_PIN 10
-#define ECHO_PIN 9
 #endif
 
-#define MAX_DISTANCE 350 // Change detection distance in cm [350]
-#define MAX_DISTANCE_DIFF 5 // [2]
+#define INTENSITY 0         // Set the brightness (0 to 15) [8] 0
+#define MAX_DISTANCE 350    // Change detection distance in cm [350]
+#define MAX_DISTANCE_DIFF 5 // [2] 5
 
 LedController lc = LedController(PIN_DATA, PIN_CLK, PIN_CS, 1);
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE);
@@ -76,9 +69,9 @@ void setup()
   Serial.begin(115200);
   delay(10);
 #ifdef VERBOSE
-  lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
-  writeMatrix(lc, smile);
+  lc.setIntensity(INTENSITY);
+  writeMatrix(lc, load);
   delay(5000);
   lc.clearMatrix();
 #endif
@@ -116,8 +109,8 @@ void setup()
   initWebSocket();
 
   // max7219
-  lc.setIntensity(8); // Set the brightness (0 to 15)
   lc.clearMatrix();
+  lc.setIntensity(INTENSITY);
 }
 
 void loop()
@@ -143,13 +136,16 @@ void loop()
 #ifdef DEBUG
     Serial.print(F("> Distance: "));
     Serial.print(distance);
+    Serial.print(F("cm; Prev:"));
+    Serial.print(prevDistance);
     Serial.println(F("cm"));
 #endif
-    if (abs(static_cast<int>(distance - prevDistance)) > MAX_DISTANCE_DIFF)
+    int distanceDiff = abs(distance - prevDistance);
+    if (distanceDiff > MAX_DISTANCE_DIFF)
     {
 #ifdef DEBUG
       Serial.print(F("> DistanceDiff: "));
-      Serial.print(abs(distance - prevDistance));
+      Serial.print(distanceDiff);
       Serial.println(F("cm"));
 #endif
       timeout = false;
