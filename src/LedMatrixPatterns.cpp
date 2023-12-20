@@ -12,16 +12,6 @@ byte smile[8] = {
     B01000010,
     B00111100};
 
-byte smile2[8] = {
-    B00111100,
-    B01000010,
-    B10100101,
-    B10000001,
-    B10111101,
-    B10000001,
-    B01000010,
-    B00111100};
-
 byte ex[8] = {
     B10000001,
     B01000010,
@@ -41,16 +31,6 @@ byte arrow[8] = {
     B00101000,
     B01000100,
     B10000010};
-
-byte load[8] = {
-    B10011000,
-    B11001100,
-    B01100110,
-    B00110011,
-    B01100110,
-    B11001100,
-    B10011000,
-    B00110000};
 
 byte null[8] = {
     B00000000,
@@ -123,16 +103,6 @@ void rotateMatrix90Degrees(byte inputMatrix[8], byte outputMatrix[8])
   }
 }
 
-/*void writeMatrix(LedController &lc, byte bname[8]) {
-  byte rotatedMatrix[8];
-  rotateMatrix90Degrees(bname, rotatedMatrix);
-
-  for (int i = 0; i <= 7; i++) {
-    lc.setRow(0, i, rotatedMatrix[i]);
-    delay(1);
-  }
-}*/
-
 void writeMatrix(LedController &lc, byte bname[8])
 {
   for (int i = 0; i <= 7; i++)
@@ -149,5 +119,25 @@ void writeMatrixMirror(LedController &lc, byte bname[8])
   {
     lc.setRow(0, i, bname[7 - i]);
     delay(1);
+  }
+}
+
+void loadingAnimation(LedController &lc)
+{
+  for (int j = 0; j < 4; j++)
+  {
+    for (int i = 0; i < 8; i++)
+    {
+      lc.setColumn(0, i, B11111111);
+      if (i != 3)
+      {
+        lc.setColumn(0, 7 - i, B11111111);
+      }
+      delay(100);
+      if (j != 3)
+      {
+        lc.clearMatrix();
+      }
+    }
   }
 }
