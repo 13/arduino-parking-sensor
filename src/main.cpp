@@ -40,9 +40,11 @@ void setup()
 #ifdef VERBOSE
   lc.clearMatrix();
   lc.setIntensity(INTENSITY);
-  writeMatrix(lc, load);
-  delay(5000);
+  loadingAnimation(lc);
   lc.clearMatrix();
+#endif
+#ifdef DEBUG
+  delay(5000);
 #endif
   // Start Boot
   Serial.println(F("> "));
