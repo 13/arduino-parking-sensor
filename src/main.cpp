@@ -85,7 +85,8 @@ void loop()
     Serial.print(prevDistance);
     Serial.println(F("cm"));
 #endif
-    int distanceDiff = abs(distance - prevDistance);
+    int tmpDistance = distance - prevDistance;
+    int distanceDiff = abs(tmpDistance);
     if (distanceDiff > MAX_DISTANCE_DIFF)
     {
 #ifdef DEBUG
