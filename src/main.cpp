@@ -8,14 +8,15 @@
 #define DEBUG
 
 // MAX7218
-#define PIN_CLK 15        // SCLK
-#define PIN_CS 10         //
-#define PIN_DATA 16       // MOSI
+#define PIN_CLK 15  // SCLK
+#define PIN_CS 10   //
+#define PIN_DATA 16 // MOSI
 // HC-SR04
 #define ECHO_PIN 2
 #define TRIGGER_PIN 3
 
-#define INTENSITY 0         // Set the brightness (0 to 15) [8] 0
+#define DISPLAY_INTENSITY 0 // Set the brightness (0 to 15) [0] 8
+#define MIN_DISTANCE 0      //
 #define MAX_DISTANCE 350    // Change detection distance in cm [350]
 #define MAX_DISTANCE_DIFF 5 // [2] 5
 
@@ -33,16 +34,14 @@ unsigned int prevDistance = 0;
 
 boolean isCarPresent = false;
 
-void setup()
+void initSerial()
 {
   Serial.begin(115200);
   delay(10);
-#ifdef VERBOSE
-  lc.clearMatrix();
-  lc.setIntensity(INTENSITY);
-  loadingAnimation(lc);
-  lc.clearMatrix();
-#endif
+}
+
+void printBootMsg()
+{
 #ifdef DEBUG
   delay(5000);
 #endif
@@ -59,9 +58,13 @@ void setup()
 #endif
   Serial.println();
 #endif
-  // max7219
-  lc.clearMatrix();
-  lc.setIntensity(INTENSITY);
+}
+
+void setup()
+{
+  initSerial();
+  printBootMsg();
+  initDisplay(lc, DISPLAY_INTENSITY);
 }
 
 void loop()
@@ -95,24 +98,26 @@ void loop()
     prevDistance = distance;
 
     // Check if car is present
-    if (distance > 0 && distance < MAX_DISTANCE)
+    if (distance > MIN_DISTANCE && distance < MAX_DISTANCE)
     {
       if (!isCarPresent)
       {
-#ifdef VERBOSE
-        Serial.println(F("> Car: True"));
-#endif
         isCarPresent = true;
+#ifdef VERBOSE
+        Serial.print(F("> Car: "));
+        Serial.println(isCarPresent);
+#endif
       }
     }
     else
     {
       if (isCarPresent)
       {
-#ifdef VERBOSE
-        Serial.println(F("> Car: False"));
-#endif
         isCarPresent = false;
+#ifdef VERBOSE
+        Serial.print(F("> Car: "));
+        Serial.println(isCarPresent);
+#endif
       }
     }
 
@@ -181,7 +186,7 @@ void loop()
     {
       if (state != 2)
       {
-        writeMatrix(lc, n1);
+        writeMatrix(lc, num1);
         state = 2;
         counterTimeout = 0;
 #ifdef VERBOSE
@@ -201,7 +206,7 @@ void loop()
     {
       if (state != 3)
       {
-        writeMatrix(lc, n2);
+        writeMatrix(lc, num2);
         state = 3;
         counterTimeout = 0;
 #ifdef VERBOSE
@@ -221,7 +226,7 @@ void loop()
     {
       if (state != 4)
       {
-        writeMatrix(lc, n3);
+        writeMatrix(lc, num3);
         state = 4;
         counterTimeout = 0;
 #ifdef VERBOSE
@@ -241,7 +246,7 @@ void loop()
     {
       if (state != 5)
       {
-        writeMatrix(lc, n4);
+        writeMatrix(lc, num4);
         state = 5;
         counterTimeout = 0;
 #ifdef VERBOSE
@@ -261,7 +266,7 @@ void loop()
     {
       if (state != 6 && !timeout)
       {
-        writeMatrix(lc, n5);
+        writeMatrix(lc, num5);
         state = 6;
         counterTimeout = 0;
 #ifdef VERBOSE
