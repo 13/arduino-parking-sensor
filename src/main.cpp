@@ -5,7 +5,7 @@
 #include "version.h"
 
 #define VERBOSE
-#define DEBUG
+// #define DEBUG
 
 // MAX7218
 #define PIN_CLK 15  // SCLK
